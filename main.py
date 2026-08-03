@@ -38,18 +38,9 @@ def process_site(site_data):
 
 def get_clean_search_results(query):
     url = "https://html.duckduckgo.com/html/"
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Referer': 'https://html.duckduckgo.com/'
-    }
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
     try:
-        response = requests.post(
-            url,
-            data={'q': query, 'kl': 'ru-ru', 'l': 'ru-ru'},
-            headers=headers,
-            timeout=5
-        )
+        response = requests.post(url, data={'q': query, 'kl': 'ru-ru'}, headers=headers, timeout=4)
         soup = BeautifulSoup(response.text, 'html.parser')
         results, seen_domains = [], set()
         for result in soup.find_all('div', class_='result'):
