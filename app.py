@@ -6,7 +6,6 @@ from urllib.parse import urlparse
 
 app = FastAPI()
 
-# Включаем CORS, чтобы сайт (Netlify или localhost) мог отправлять запросы
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -24,29 +23,33 @@ def read_root():
 
 @app.post("/search")
 def search(req: SearchRequest):
-    query = req.query.strip()
+    # Очищаем запрос от случайных скобок и кавычек
+    query = req.query.replace("[", "").replace("]", "").replace('"', '').strip()
+    print(f"\n[ЗАПРОС ОТ НЕЙРОСЕТИ]: '{query}'")
+
     if not query:
-        raise HTTPException(status_code=400, detail="Empty query")
+        return {"context": "", "sources": []}
 
     try:
         sources = []
         snippets = []
 
-        # Поиск актуальных данных через DuckDuckGo
         with DDGS() as ddgs:
-            # Ищем 5 самых релевантных результатов
+            # 1. Пробуем найти актуальные результаты в регионе RU
             results = list(ddgs.text(query, region="ru-ru", max_results=5))
+            # 2. Если на русском пусто, ищем глобально
+            if not results:
+                results = list(ddgs.text(query, max_results=5))
 
         for r in results:
             url = r.get("href", "")
             title = r.get("title", "")
             body = r.get("body", "")
-            
-            # Извлекаем домен (например: wikipedia.org)
+
             parsed_url = urlparse(url)
             domain = parsed_url.netloc.replace("www.", "")
 
-            if domain:
+            if domain and body:
                 sources.append({
                     "title": title,
                     "url": url,
@@ -54,7 +57,7 @@ def search(req: SearchRequest):
                 })
                 snippets.append(f"[{domain}]: {title} — {body}")
 
-        # Склеиваем весь найденный контекст для нейросети
+        print(f"[НАЙДЕНО]: {len(sources)} источников.")
         context = "\n\n".join(snippets)
 
         return {
@@ -63,9 +66,5 @@ def search(req: SearchRequest):
         }
 
     except Exception as e:
-        print(f"Ошибка при поиске: {e}")
-        # Если поиск ничего не нашел или временно заблокирован
-        return {
-            "context": "",
-            "sources": []
-        }
+        print(f"[ОШИБКА ПОИСКА]: {e}")
+        return {"context": "", "sources": []}
