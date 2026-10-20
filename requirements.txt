@@ -1,6 +1,4 @@
-duckduckgo_search>=6.0.0
-flask
-flask-cors
-requests
-beautifulsoup4
-gunicorn
+fastapi
+uvicorn
+duckduckgo_search
+pydantic
