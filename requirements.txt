@@ -1,5 +1,6 @@
+duckduckgo_search>=6.0.0
 flask
 flask-cors
 requests
-bs4
+beautifulsoup4
 gunicorn
